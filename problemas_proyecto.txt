@@ -1,0 +1,40 @@
+Parte 2 -> Problmas Compilacion Fakeroot: ESTE ES EL CONTEXTO
+Resumen de problemas actuales en el proyecto build STC-G207
+1. Problemas con permisos y fakeroot
+Fakeroot se cuelga en algunas operaciones (chmod, opkg-build).
+
+Al ejecutar los mismos comandos fuera de fakeroot (o como sudo), no se cuelgan, pero los permisos/fake-ownership no se emulan, lo que puede romper la imagen rootfs.
+
+Duda sobre si quitar fakeroot arregla o empeora el build final.
+
+2. Problemas de rutas y archivos faltantes
+El bloque web (optimiza_para_arm.sh) y directorio optimizacionParaARM no existen en el repositorio local, pero sí aparecen referenciados en scripts y configuraciones.
+
+Esto bloquea el build del bloque Web y obliga a comentar esa sección para avanzar.
+
+3. Problemas de cuelgue/freeze en algunos scripts
+El build parece terminar algunos pasos (como opkg-build), pero la terminal se queda colgada, sin volver al prompt.
+
+Sucede tanto al ejecutar scripts enteros como pasos individuales dentro de scripts.
+
+4. Problemas de procesos colgados y debugging
+Requiere matar procesos manualmente (pkill fakeroot, etc.) para poder relanzar el build.
+
+El script puede estar esperando algo (input, proceso hijo) que no termina correctamente.
+
+5. Dudas sobre si el build final será válido
+Al omitir o modificar pasos (fakeroot/sudo) pueden cambiar permisos o propietarios en los ficheros del rootfs, con el riesgo de que la imagen generada no funcione como esperado en destino.
+
+Resumen ultra-resumido para re-engancharte
+Problemas de permisos (fakeroot/sudo).
+
+Faltan scripts del bloque Web.
+
+Scripts se cuelgan tras algunas operaciones (opkg-build, chmod con fakeroot).
+
+Hay procesos zombis y el prompt no vuelve.
+
+No hay seguridad de que el rootfs final sea válido si quitas fakeroot.
+
+Puedes guardar este resumen en un .txt para el próximo hilo.
+Cuando quieras retomar, me das este resumen y arrancamos de aquí, directo al grano.

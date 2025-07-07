@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Árbol de Proyectos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .panel h2 {
+            color: #5a67d8;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #5a67d8;
+            box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #5a67d8;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: #718096;
+        }
+
+        .btn-success {
+            background: #48bb78;
+        }
+
+        .output-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .output-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #718096;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #5a67d8;
+            border-bottom-color: #5a67d8;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .output-area {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+
+        .markdown-preview {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+            overflow-y: auto;
+        }
+
+        .markdown-preview h1, .markdown-preview h2, .markdown-preview h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .markdown-preview pre {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+
+        .debug-info {
+            background: #e6fffa;
+            border: 1px solid #81e6d9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .debug-info h4 {
+            color: #285e61;
+            margin-bottom: 10px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            background: #f7fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-wrapper:hover {
+            border-color: #5a67d8;
+            background: #f0f8ff;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌳 Generador de Árbol de Proyectos</h1>
+            <p>Crea documentación visual de la estructura de tu proyecto con opciones avanzadas</p>
+        </div>
+
+        <div class="main-content">
+            <div class="panel">
+                <h2>⚙️ Configuración</h2>
+                
+                <div class="form-group">
+                    <label for="projectName">Nombre del Proyecto:</label>
+                    <input type="text" id="projectName" placeholder="Mi Proyecto Genial" value="Mi Proyecto">
+                </div>
+
+                <div class="form-group">
+                    <label for="projectPath">Ruta del Proyecto:</label>
+                    <input type="text" id="projectPath" placeholder="/ruta/a/mi/proyecto" value="/home/usuario/mi-proyecto">
+                </div>
+
+                <div class="form-group">
+                    <label for="ignoreDirectories">Directorios a Ignorar:</label>
+                    <input type="text" id="ignoreDirectories" placeholder=".git, node_modules, venv" value=".git, __pycache__, venv, .pytest_cache, node_modules, dist, build">
+                </div>
+
+                <div class="form-group">
+                    <label for="ignoreFiles">Archivos a Ignorar:</label>
+                    <input type="text" id="ignoreFiles" placeholder="*.pyc, *.tmp, *.log" value="*.pyc, *.tmp, *.log, *.DS_Store, Thumbs.db">
+                </div>
+
+                <div class="form-group">
+                    <label for="maxDepth">Profundidad Máxima:</label>
+                    <select id="maxDepth">
+                        <option value="0">Sin límite</option>
+                        <option value="3">3 niveles</option>
+                        <option value="5" selected>5 niveles</option>
+                        <option value="7">7 niveles</option>
+                        <option value="10">10 niveles</option>
+                    </select>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showHidden" checked>
+                    <label for="showHidden">Mostrar archivos ocultos</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showSizes" checked>
+                    <label for="showSizes">Mostrar tamaños de archivo</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="enableDebug" checked>
+                    <label for="enableDebug">Mostrar información de debug</label>
+                </div>
+
+                <div class="form-group">
+                    <button class="btn" onclick="generateTree()">🌳 Generar Árbol</button>
+                    <button class="btn btn-secondary" onclick="clearOutput()">🧹 Limpiar</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>📁 Estructura de Ejemplo</h2>
+                <div class="output-area" style="min-height: 300px;">
+mi-proyecto/
+├── 📁 src/
+│   ├── 📄 main.py (2.5 KB)
+│   ├── 📄 config.py (1.2 KB)
+│   └── 📁 utils/
+│       ├── 📄 helpers.py (3.1 KB)
+│       └── 📄 validators.py (1.8 KB)
+├── 📁 tests/
+│   ├── 📄 test_main.py (4.2 KB)
+│   └── 📄 test_utils.py (2.9 KB)
+├── 📁 docs/
+│   ├── 📄 README.md (5.3 KB)
+│   └── 📄 CHANGELOG.md (2.1 KB)
+├── 📄 requirements.txt (0.8 KB)
+├── 📄 setup.py (1.5 KB)
+└── 📄 .gitignore (0.3 KB)
+                </div>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <div class="status-message" id="statusMessage"></div>
+            
+            <div class="output-tabs">
+                <button class="tab active" onclick="showTab('ascii')">🌳 Vista ASCII</button>
+                <button class="tab" onclick="showTab('markdown')">📝 Markdown</button>
+                <button class="tab" onclick="showTab('mermaid')">🔷 Mermaid</button>
+                <button class="tab" onclick="showTab('preview')">👁️ Vista Previa</button>
+            </div>
+
+            <div id="ascii-tab" class="tab-content active">
+                <div class="form-group">
+                    <button class="btn btn-success" onclick="copyToClipboard('asciiOutput')">📋 Copiar ASCII</button>
+                    <button class="btn btn-secondary" onclick="downloadFile('ascii')">💾 Descargar</button>
+                </div>
+                <div class="output-area" id="asciiOutput">Haz clic en "Generar Árbol" para ver la estructura ASCII...</div>
+            </div>
+
+            <div id="markdown-tab" class="tab-content">
+                <div class="form-group">
+                    <button class="btn btn-success" onclick="copyToClipboard('markdownOutput')">📋 Copiar Markdown</button>
+                    <button class="btn btn-secondary" onclick="downloadFile('markdown')">💾 Descargar</button>
+                </div>
+                <div class="output-area" id="markdownOutput">Haz clic en "Generar Árbol" para ver el markdown...</div>
+            </div>
+
+            <div id="mermaid-tab" class="tab-content">
+                <div class="form-group">
+                    <button class="btn btn-success" onclick="copyToClipboard('mermaidOutput')">📋 Copiar Mermaid</button>
+                    <button class="btn btn-secondary" onclick="downloadFile('mermaid')">💾 Descargar</button>
+                </div>
+                <div class="output-area" id="mermaidOutput">Haz clic en "Generar Árbol" para ver el diagrama Mermaid...</div>
+            </div>
+
+            <div id="preview-tab" class="tab-content">
+                <div class="markdown-preview" id="previewOutput">
+                    <p><em>Haz clic en "Generar Árbol" para ver la vista previa...</em></p>
+                </div>
+            </div>
+
+            <div class="debug-info" id="debugInfo" style="display: none;">
+                <h4>🔍 Información de Debug</h4>
+                <div id="debugContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulación de estructura de proyecto para demo
+        const mockProjectStructure = {
+            name: 'mi-proyecto',
+            type: 'directory',
+            size: 0,
+            children: [
+                {
+                    name: 'src',
+                    type: 'directory',
+                    size: 0,
+                    children: [
+                        { name: 'main.py', type: 'file', size: 2560 },
+                        { name: 'config.py', type: 'file', size: 1228 },
+                        {
+                            name: 'utils',
+                            type: 'directory',
+                            size: 0,
+                            children: [
+                                { name: 'helpers.py', type: 'file', size: 3174 },
+                                { name: 'validators.py', type: 'file', size: 1843 }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: 'tests',
+                    type: 'directory',
+                    size: 0,
+                    children: [
+                        { name: 'test_main.py', type: 'file', size: 4301 },
+                        { name: 'test_utils.py', type: 'file', size: 2967 }
+                    ]
+                },
+                {
+                    name: 'docs',
+                    type: 'directory',
+                    size: 0,
+                    children: [
+                        { name: 'README.md', type: 'file', size: 5432 },
+                        { name: 'CHANGELOG.md', type: 'file', size: 2156 }
+                    ]
+                },
+                { name: 'requirements.txt', type: 'file', size: 823 },
+                { name: 'setup.py', type: 'file', size: 1534 },
+                { name: '.gitignore', type: 'file', size: 312 }
+            ]
+        };
+
+        let debugInfo = {
+            totalFiles: 0,
+            totalDirectories: 0,
+            ignoredItems: [],
+            processedItems: [],
+            maxDepthReached: false,
+            processingTime: 0
+        };
+
+        function showTab(tabName) {
+            // Ocultar todos los tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Mostrar tab seleccionado
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function formatSize(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let size = bytes;
+            let unitIndex = 0;
+            
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+            
+            return `${size.toFixed(1)} ${units[unitIndex]}`;
+        }
+
+        function shouldIgnore(name, type, ignoreDirectories, ignoreFiles) {
+            const ignoreDirs = ignoreDirectories.split(',').map(s => s.trim());
+            const ignoreFilePatterns = ignoreFiles.split(',').map(s => s.trim());
+            
+            if (type === 'directory') {
+                const isIgnored = ignoreDirs.includes(name);
+                if (isIgnored) {
+                    debugInfo.ignoredItems.push(`📁 ${name} (directorio ignorado)`);
+                }
+                return isIgnored;
+            } else {
+                const isIgnored = ignoreFilePatterns.some(pattern => {
+                    if (pattern.includes('*')) {
+                        const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+                        return regex.test(name);
+                    }
+                    return name === pattern;
+                });
+                if (isIgnored) {
+                    debugInfo.ignoredItems.push(`📄 ${name} (archivo ignorado)`);
+                }
+                return isIgnored;
+            }
+        }
+
+        function generateASCII(structure, options, prefix = '', isLast = true, currentDepth = 0) {
+            const maxDepth = parseInt(options.maxDepth) || 0;
+            if (maxDepth > 0 && currentDepth >= maxDepth) {
+                debugInfo.maxDepthReached = true;
+                return '';
+            }
+
+            const icon = structure.type === 'directory' ? '📁' : '📄';
+            const sizeStr = options.showSizes && structure.type === 'file' ? ` (${formatSize(structure.size)})` : '';
+            const connector = isLast ? '└── ' : '├── ';
+            const line = prefix + connector + icon + ' ' + structure.name + sizeStr + '\n';
+            
+            debugInfo.processedItems.push(structure.name);
+            if (structure.type === 'directory') {
+                debugInfo.totalDirectories++;
+            } else {
+                debugInfo.totalFiles++;
+            }
+
+            let result = line;
+
+            if (structure.children && structure.children.length > 0) {
+                const newPrefix = prefix + (isLast ? '    ' : '│   ');
+                const filteredChildren = structure.children.filter(child => 
+                    !shouldIgnore(child.name, child.type, options.ignoreDirectories, options.ignoreFiles)
+                );
+
+                filteredChildren.forEach((child, index) => {
+                    const childIsLast = index === filteredChildren.length - 1;
+                    result += generateASCII(child, options, newPrefix, childIsLast, currentDepth + 1);
+                });
+            }
+
+            return result;
+        }
+
+        function generateMarkdown(structure, options) {
+            const projectName = options.projectName || 'Proyecto';
+            const projectPath = options.projectPath || '/ruta/proyecto';
+            
+            let markdown = `# 📁 ${projectName}\n\n`;
+            markdown += `**Ruta:** \`${projectPath}\`\n\n`;
+            markdown += `## 🌳 Estructura del Proyecto\n\n`;
+            markdown += '```\n';
+            markdown += generateASCII(structure, options);
+            markdown += '```\n\n';
+            
+            markdown += `## 📊 Estadísticas\n\n`;
+            markdown += `- **Total de archivos:** ${debugInfo.totalFiles}\n`;
+            markdown += `- **Total de directorios:** ${debugInfo.totalDirectories}\n`;
+            markdown += `- **Elementos ignorados:** ${debugInfo.ignoredItems.length}\n`;
+            markdown += `- **Tiempo de procesamiento:** ${debugInfo.processingTime}ms\n\n`;
+            
+            if (debugInfo.ignoredItems.length > 0) {
+                markdown += `## 🚫 Elementos Ignorados\n\n`;
+                debugInfo.ignoredItems.forEach(item => {
+                    markdown += `- ${item}\n`;
+                });
+                markdown += '\n';
+            }
+            
+            markdown += `---\n`;
+            markdown += `*Generado automáticamente el ${new Date().toLocaleString()}*\n`;
+            
+            return markdown;
+        }
+
+        function generateMermaid(structure, options) {
+            let mermaid = 'graph TD\n';
+            let nodeId = 0;
+            
+            function addNode(node, parentId = null) {
+                const currentId = nodeId++;
+                const icon = node.type === 'directory' ? '📁' : '📄';
+                const sizeStr = options.showSizes && node.type === 'file' ? `<br/>${formatSize(node.size)}` : '';
+                
+                mermaid += `    ${currentId}["${icon} ${node.name}${sizeStr}"]\n`;
+                
+                if (parentId !== null) {
+                    mermaid += `    ${parentId} --> ${currentId}\n`;
+                }
+                
+                if (node.children && node.children.length > 0) {
+                    const filteredChildren = node.children.filter(child => 
+                        !shouldIgnore(child.name, child.type, options.ignoreDirectories, options.ignoreFiles)
+                    );
+                    
+                    filteredChildren.forEach(child => {
+                        addNode(child, currentId);
+                    });
+                }
+                
+                return currentId;
+            }
+            
+            addNode(structure);
+            return mermaid;
+        }
+
+        function generateTree() {
+            const startTime = Date.now();
+            
+            // Reset debug info
+            debugInfo = {
+                totalFiles: 0,
+                totalDirectories: 0,
+                ignoredItems: [],
+                processedItems: [],
+                maxDepthReached: false,
+                processingTime: 0
+            };
+
+            const options = {
+                projectName: document.getElementById('projectName').value,
+                projectPath: document.getElementById('projectPath').value,
+                ignoreDirectories: document.getElementById('ignoreDirectories').value,
+                ignoreFiles: document.getElementById('ignoreFiles').value,
+                maxDepth: document.getElementById('maxDepth').value,
+                showHidden: document.getElementById('showHidden').checked,
+                showSizes: document.getElementById('showSizes').checked,
+                enableDebug: document.getElementById('enableDebug').checked
+            };
+
+            try {
+                // Generar diferentes formatos
+                const asciiTree = generateASCII(mockProjectStructure, options);
+                const markdownContent = generateMarkdown(mockProjectStructure, options);
+                const mermaidDiagram = generateMermaid(mockProjectStructure, options);
+                
+                debugInfo.processingTime = Date.now() - startTime;
+
+                // Actualizar outputs
+                document.getElementById('asciiOutput').textContent = asciiTree;
+                document.getElementById('markdownOutput').textContent = markdownContent;
+                document.getElementById('mermaidOutput').textContent = mermaidDiagram;
+                
+                // Generar vista previa
+                const previewHTML = `
+                    <h1>📁 ${options.projectName}</h1>
+                    <p><strong>Ruta:</strong> <code>${options.projectPath}</code></p>
+                    <h2>🌳 Estructura del Proyecto</h2>
+                    <pre>${asciiTree}</pre>
+                    <h2>📊 Estadísticas</h2>
+                    <ul>
+                        <li><strong>Total de archivos:</strong> ${debugInfo.totalFiles}</li>
+                        <li><strong>Total de directorios:</strong> ${debugInfo.totalDirectories}</li>
+                        <li><strong>Elementos ignorados:</strong> ${debugInfo.ignoredItems.length}</li>
+                        <li><strong>Tiempo de procesamiento:</strong> ${debugInfo.processingTime}ms</li>
+                    </ul>
+                `;
+                document.getElementById('previewOutput').innerHTML = previewHTML;
+
+                // Mostrar información de debug
+                if (options.enableDebug) {
+                    const debugContent = `
+                        <p><strong>Archivos procesados:</strong> ${debugInfo.totalFiles}</p>
+                        <p><strong>Directorios procesados:</strong> ${debugInfo.totalDirectories}</p>
+                        <p><strong>Elementos ignorados:</strong> ${debugInfo.ignoredItems.length}</p>
+                        <p><strong>Profundidad máxima alcanzada:</strong> ${debugInfo.maxDepthReached ? 'Sí' : 'No'}</p>
+                        <p><strong>Tiempo de procesamiento:</strong> ${debugInfo.processingTime}ms</p>
+                        ${debugInfo.ignoredItems.length > 0 ? `
+                            <details>
+                                <summary>Ver elementos ignorados</summary>
+                                <ul>
+                                    ${debugInfo.ignoredItems.map(item => `<li>${item}</li>`).join('')}
+                                </ul>
+                            </details>
+                        ` : ''}
+                    `;
+                    document.getElementById('debugContent').innerHTML = debugContent;
+                    document.getElementById('debugInfo').style.display = 'block';
+                } else {
+                    document.getElementById('debugInfo').style.display = 'none';
+                }
+
+                showStatus('¡Árbol generado exitosamente!', 'success');
+                
+            } catch (error) {
+                console.error('Error al generar el árbol:', error);
+                showStatus('Error al generar el árbol: ' + error.message, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.className = `status-message status-${type}`;
+            statusElement.style.display = 'block';
+            
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 5000);
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showStatus('¡Contenido copiado al portapapeles!', 'success');
+            }).catch(err => {
+                showStatus('Error al copiar: ' + err.message, 'error');
+            });
+        }
+
+        function downloadFile(type) {
+            const content = document.getElementById(type + 'Output').textContent;
+            const extension = type === 'markdown' ? 'md' : type === 'mermaid' ? 'mmd' : 'txt';
+            const filename = `project-tree.${extension}`;
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showStatus(`Archivo ${filename} descargado exitosamente!`, 'success');
+        }
+
+        function clearOutput() {
+            document.getElementById('asciiOutput').textContent = 'Salida limpiada. Haz clic en "Generar Árbol" para ver la estructura...';
+            document.getElementById('markdownOutput').textContent = 'Salida limpiada. Haz clic en "Generar Árbol" para ver el markdown...';
+            document.getElementById('mermaidOutput').textContent = 'Salida limpiada. Haz clic en "Generar Árbol" para ver el diagrama...';
+            document.getElementById('previewOutput').innerHTML = '<p><em>Salida limpiada. Haz clic en "Generar Árbol" para ver la vista previa...</em></p>';
+            document.getElementById('debugInfo').style.display = 'none';
+            showStatus('Salida limpiada exitosamente!', 'success');
+        }
+
+        // Generar árbol inicial al cargar la página
+        window.onload = function() {
+            generateTree();
+        };
+    </script>
+</body>
+</html>
